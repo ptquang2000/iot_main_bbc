@@ -2,7 +2,7 @@ function OnRadioReceivedHandler (name: string, value: number) {
     parsedName = name.split(":")
     sequenceNum = parseFloat(parsedName[0])
     radioID = parsedName[1]
-    sensorID = parseFloat(parsedName[2])
+    sensorID = parseFloat(parsedName[2]) - 1
     if (radioID != RADIO_ID) {
         return
     }
@@ -59,6 +59,6 @@ let LED_CMD = [
 ]
 loops.everyInterval(100, function () {
     if (radioNameBuffer.length != 0) {
-        radio.sendValue("" + dataSeqNum[LED_SENSOR_ID] + ":" + radioNameBuffer[0], parseFloat(radioValueBuffer[0]))
+        radio.sendValue("" + dataSeqNum[LED_SENSOR_ID - 1] + ":" + radioNameBuffer[0], parseFloat(radioValueBuffer[0]))
     }
 })
