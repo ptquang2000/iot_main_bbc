@@ -6,6 +6,7 @@ function OnRadioReceivedHandler (name: string, value: number) {
     radioID = parsedName[1]
     sensorID = parseFloat(parsedName[2]) - 1
     if (radioID != RADIO_ID) {
+        basic.showNumber(parseFloat(radioID))
         return
     }
     successNotification(2)
@@ -29,7 +30,6 @@ function OnRadioReceivedHandler (name: string, value: number) {
         // SENSOR_ID
         radio.sendValue("" + (1 - seqNum) + ":" + RADIO_ID + ":" + parsedName[2], -1)
         serial.writeString("!" + parsedName[2] + ":" + parsedName[3] + ":" + value + "#")
-        successNotification(1)
     }
 }
 // release first frame in buffer
@@ -40,11 +40,11 @@ function releaseBuffer (id: number) {
 }
 function OnSerialReceivedHandler (cmd: string) {
     if (SENSOR1_CMD.indexOf(cmd) != -1) {
-        sensor1RadioNames.push("" + radioID + ":" + SENSOR1_ID + ":" + "LED")
+        sensor1RadioNames.push("" + RADIO_ID + ":" + SENSOR1_ID + ":" + "LED")
         sensor1RadioValues.push(cmd)
     }
     if (SENSOR2_CMD.indexOf(cmd) != -1) {
-        sensor2RadioNames.push("" + radioID + ":" + SENSOR2_ID + ":" + "LED")
+        sensor2RadioNames.push("" + RADIO_ID + ":" + SENSOR2_ID + ":" + "LED")
         sensor2RadioValues.push(cmd)
     }
     // releasing immediately if buffer is empty
@@ -71,12 +71,20 @@ function successNotification (_type: number) {
             # # # # #
             # . . . #
             `)
-    } else {
+    } else if (_type == 2) {
         basic.showLeds(`
             # # # # .
             # . . . #
             # # # # .
             # . . . #
+            # . . . #
+            `)
+    } else {
+        basic.showLeds(`
+            # . . . #
+            . # . # .
+            . . # . .
+            . # . # .
             # . . . #
             `)
     }
@@ -107,6 +115,8 @@ let SENSOR1_CMD: string[] = []
 let SENSOR1_ID = 0
 let sensor1RadioValues: string[] = []
 let sensor1RadioNames: string[] = []
+serial.setBaudRate(BaudRate.BaudRate115200)
+serial.redirectToUSB()
 sensor1RadioNames = []
 sensor1RadioValues = []
 SENSOR1_ID = 1
@@ -130,16 +140,14 @@ lastReleaseTimes = [0, 0]
 radioNameBuffers = [sensor1RadioNames, sensor2RadioNames]
 radioValueBuffers = [sensor1RadioValues, sensor2RadioValues]
 let sensorCommands = [SENSOR1_CMD, SENSOR2_CMD]
-let TIMEOUT = 500
+let TIMEOUT = 5000
 TOTAL_SENSORS = 2
 radio.setGroup(244)
-RADIO_ID = "1813678"
-control.inBackground(function () {
-    while (true) {
-        for (let index3 = 0; index3 <= TOTAL_SENSORS - 1; index3++) {
-            if (radioNameBuffers[index3].length != 0 && lastReleaseTimes[index3] - control.millis() >= TIMEOUT) {
-                releaseBuffer(index3)
-            }
+RADIO_ID = "555"
+basic.forever(function () {
+    for (let index3 = 0; index3 <= TOTAL_SENSORS - 1; index3++) {
+        if (radioNameBuffers[index3].length != 0 && control.millis() - lastReleaseTimes[index3] >= TIMEOUT) {
+            releaseBuffer(index3)
         }
     }
 })
