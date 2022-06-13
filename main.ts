@@ -8,6 +8,7 @@ function OnRadioReceivedHandler (name: string, value: number) {
     if (radioID != RADIO_ID) {
         return
     }
+    successNotification(2)
     // ACK
     if (parsedName.length == 3 && dataSeqNums[sensorID] != seqNum) {
         dataSeqNums[sensorID] = seqNum
@@ -28,12 +29,14 @@ function OnRadioReceivedHandler (name: string, value: number) {
         // SENSOR_ID
         radio.sendValue("" + (1 - seqNum) + ":" + RADIO_ID + ":" + parsedName[2], -1)
         serial.writeString("!" + parsedName[2] + ":" + parsedName[3] + ":" + value + "#")
+        successNotification(1)
     }
 }
 // release first frame in buffer
 function releaseBuffer (id: number) {
     radio.sendValue("" + dataSeqNums[id] + ":" + radioNameBuffers[id][0], parseFloat(radioValueBuffers[id][0]))
     lastReleaseTimes[id] = control.millis()
+    successNotification(0)
 }
 function OnSerialReceivedHandler (cmd: string) {
     if (SENSOR1_CMD.indexOf(cmd) != -1) {
@@ -45,11 +48,40 @@ function OnSerialReceivedHandler (cmd: string) {
         sensor2RadioValues.push(cmd)
     }
     // releasing immediately if buffer is empty
-    for (let index = 0; index <= TOTAL_SENSORS - 1; index++) {
-        if (radioNameBuffers[index].length == 1) {
-            releaseBuffer(index)
+    for (let index2 = 0; index2 <= TOTAL_SENSORS - 1; index2++) {
+        if (radioNameBuffers[index2].length == 1) {
+            releaseBuffer(index2)
         }
     }
+}
+function successNotification (_type: number) {
+    if (_type == 0) {
+        basic.showLeds(`
+            # # # # #
+            # . . . .
+            # # # # #
+            . . . . #
+            # # # # #
+            `)
+    } else if (_type == 1) {
+        basic.showLeds(`
+            . . # . .
+            . # . # .
+            # . . . #
+            # # # # #
+            # . . . #
+            `)
+    } else {
+        basic.showLeds(`
+            # # # # .
+            # . . . #
+            # # # # .
+            # . . . #
+            # . . . #
+            `)
+    }
+    basic.pause(100)
+    basic.clearScreen()
 }
 serial.onDataReceived(serial.delimiters(Delimiters.Hash), function () {
     OnSerialReceivedHandler(serial.readUntil(serial.delimiters(Delimiters.Hash)))
@@ -104,9 +136,9 @@ radio.setGroup(244)
 RADIO_ID = "1813678"
 control.inBackground(function () {
     while (true) {
-        for (let index = 0; index <= TOTAL_SENSORS - 1; index++) {
-            if (radioNameBuffers[index].length != 0 && lastReleaseTimes[index] - control.millis() >= TIMEOUT) {
-                releaseBuffer(index)
+        for (let index3 = 0; index3 <= TOTAL_SENSORS - 1; index3++) {
+            if (radioNameBuffers[index3].length != 0 && lastReleaseTimes[index3] - control.millis() >= TIMEOUT) {
+                releaseBuffer(index3)
             }
         }
     }
