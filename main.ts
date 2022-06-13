@@ -26,10 +26,17 @@ function OnRadioReceivedHandler (name: string, value: number) {
     }
     // FRAME
     if (parsedName.length == 4) {
+        dataType = parsedName[3]
+        if (dataType == "0") {
+            dataType = "TEMP"
+        }
+        if (dataType == "1") {
+            dataType = "LIGHT"
+        }
         // flip sequence number
         // SENSOR_ID
         radio.sendValue("" + (1 - seqNum) + ":" + RADIO_ID + ":" + parsedName[2], -1)
-        serial.writeString("!" + parsedName[2] + ":" + parsedName[3] + ":" + value + "#")
+        serial.writeString("!" + parsedName[2] + ":" + dataType + ":" + value + "#")
     }
 }
 // release first frame in buffer
@@ -97,6 +104,7 @@ serial.onDataReceived(serial.delimiters(Delimiters.Hash), function () {
 radio.onReceivedValue(function (name, value) {
     OnRadioReceivedHandler(name, value)
 })
+let dataType = ""
 let sensorID = 0
 let radioID = ""
 let seqNum = 0
@@ -143,7 +151,7 @@ let sensorCommands = [SENSOR1_CMD, SENSOR2_CMD]
 let TIMEOUT = 5000
 TOTAL_SENSORS = 2
 radio.setGroup(244)
-RADIO_ID = "555"
+RADIO_ID = "55"
 basic.forever(function () {
     for (let index3 = 0; index3 <= TOTAL_SENSORS - 1; index3++) {
         if (radioNameBuffers[index3].length != 0 && control.millis() - lastReleaseTimes[index3] >= TIMEOUT) {
