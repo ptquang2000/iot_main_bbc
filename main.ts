@@ -6,12 +6,13 @@ function OnRadioReceivedHandler (name: string, value: number) {
     radioID = parsedName[1]
     sensorID = parseFloat(parsedName[2]) - 1
     if (radioID != RADIO_ID) {
+        RadioDebugger(3, seqNum)
         basic.showNumber(parseFloat(radioID))
         return
     }
-    successNotification(2)
     // ACK
     if (parsedName.length == 3 && dataSeqNums[sensorID] != seqNum) {
+        RadioDebugger(2, seqNum)
         dataSeqNums[sensorID] = seqNum
         for (let index = 0; index <= TOTAL_SENSORS - 1; index++) {
             if (sensorID == index) {
@@ -36,7 +37,7 @@ function OnRadioReceivedHandler (name: string, value: number) {
         // flip sequence number
         // SENSOR_ID
         radio.sendValue("" + (1 - seqNum) + ":" + RADIO_ID + ":" + parsedName[2], -1)
-        successNotification(1)
+        RadioDebugger(1, 1 - seqNum)
         serial.writeString("!" + parsedName[2] + ":" + dataType + ":" + value + "#")
     }
 }
@@ -44,7 +45,7 @@ function OnRadioReceivedHandler (name: string, value: number) {
 function releaseBuffer (id: number) {
     radio.sendValue("" + dataSeqNums[id] + ":" + radioNameBuffers[id][0], parseFloat(radioValueBuffers[id][0]))
     lastReleaseTimes[id] = control.millis()
-    successNotification(0)
+    RadioDebugger(0, dataSeqNums[id])
 }
 function OnSerialReceivedHandler (cmd: string) {
     if (SENSOR1_CMD.indexOf(cmd) != -1) {
@@ -62,30 +63,54 @@ function OnSerialReceivedHandler (cmd: string) {
         }
     }
 }
-function successNotification (_type: number) {
+function RadioDebugger (_type: number, seg: number) {
     if (_type == 0) {
-        basic.showLeds(`
-            # # # # #
-            # . . . .
-            # # # # #
-            . . . . #
-            # # # # #
-            `)
-    } else if (_type == 1) {
         basic.showLeds(`
             . . # . .
             . # . # .
+            # . # . #
+            . # . # .
             # . . . #
-            # # # # #
+            `)
+        basic.pause(50)
+        basic.showLeds(`
+            . . # . .
+            . # . # .
+            # . # . #
+            . # . # .
             # . . . #
+            `)
+    } else if (_type == 1) {
+        basic.showLeds(`
+            # . . . #
+            . # . # .
+            # . # . #
+            . # . # .
+            . . # . .
+            `)
+        basic.pause(50)
+        basic.showLeds(`
+            # . . . #
+            . # . # .
+            # . # . #
+            . # . # .
+            . . # . .
             `)
     } else if (_type == 2) {
         basic.showLeds(`
-            # # # # .
-            # . . . #
-            # # # # .
-            # . . . #
-            # . . . #
+            . # # . .
+            # . . # .
+            # . . # .
+            # . . # .
+            . # # . .
+            `)
+        basic.pause(50)
+        basic.showLeds(`
+            # . . # .
+            # . # . .
+            # # . . .
+            # . # . .
+            # . . # .
             `)
     } else {
         basic.showLeds(`
@@ -95,8 +120,18 @@ function successNotification (_type: number) {
             . # . # .
             # . . . #
             `)
+        basic.pause(50)
+        basic.showLeds(`
+            # . . . #
+            . # . # .
+            . . # . .
+            . # . # .
+            # . . . #
+            `)
     }
-    basic.pause(100)
+    basic.pause(50)
+    basic.showNumber(seg)
+    basic.pause(50)
     basic.clearScreen()
 }
 serial.onDataReceived(serial.delimiters(Delimiters.Hash), function () {
