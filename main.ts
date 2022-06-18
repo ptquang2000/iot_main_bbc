@@ -36,6 +36,7 @@ function OnRadioReceivedHandler (name: string, value: number) {
         // flip sequence number
         // SENSOR_ID
         radio.sendValue("" + (1 - seqNum) + ":" + RADIO_ID + ":" + parsedName[2], -1)
+        successNotification(1)
         serial.writeString("!" + parsedName[2] + ":" + dataType + ":" + value + "#")
     }
 }
